@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+```{r}
+library(jsonlite)
+library(tm)
+library(qdap)
+job_desc <- jsonlite::fromJSON('indeed_job_descs_2020_09_20.json')
+names(job_desc)
+job_desc$request_params[[1]] #not na 1
+job_desc$job_descriptions[[45]]  # not na 2
+len <- function(x) {
+  return(length(x))
+}
+
+l <- sapply(job_desc$job_descriptions,length)
+l_p <- sapply(job_desc$request_params,length)
+description <- job_desc$job_descriptions
+
+desc = c()
+
+
+for (i in 1:length(description)){
+  for (j in 1:length(description[[i]])){
+    if (is.na(description[[i]][j])){
+      next
+    }
+    desc <- append(desc,description[[i]][j])
+  }
+}
+
+library(methods)
+library(quanteda)
+data("data_corpus_inaugural", package = "quanteda")
+d <- quanteda::dfm(desc, verbose = FALSE)
+
+dim(d)
+
+#l <- sapply(desc,len)
+#desc_dtm <- DocumentTermMatrix(desc[[1]])
+target_freq <- as.numeric(d)
+freqs_mat <- as.matrix(d)
+doc_freq <- apply(freqs_mat,2,function(x) mean(x>0))
+idf <- 1/doc_freq
+idf_mat <- rep(idf,nrow(freqs_mat), byrow = TRUE, nrow = nrow(freqs_mat))
+tf_idf <- freqs_mat * idf_mat
+```
+
