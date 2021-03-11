@@ -48,3 +48,7 @@ idf_mat <- rep(idf,nrow(freqs_mat), byrow = TRUE, nrow = nrow(freqs_mat))
 tf_idf <- freqs_mat * idf_mat
 ```
 
+
+
+
+
