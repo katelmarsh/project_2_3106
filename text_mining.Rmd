@@ -33,7 +33,7 @@ for (i in 1:length(description)){
 
 library(methods)
 library(quanteda)
-data("data_corpus_inaugural", package = "quanteda")
+# data("data_corpus_inaugural", package = "quanteda")
 d <- quanteda::dfm(desc, verbose = FALSE)
 
 dim(d)
@@ -72,4 +72,42 @@ There are a lot of words with high PCA values.
 NOTE: should we keep the websites in? 
 TF-IDF does seem to be important though because it has revealed that the job descriptions are asking for very specific things like "agtech" or "adventurous" very frequently.  
 
+
+```{r remove stopwords and punctuations}
+desc_cleaned <- c()
+for (i in seq_along(desc)){
+    without_stopwords <- rm_stopwords(
+    desc[i],
+    stopwords = qdapDictionaries::Top25Words,
+    unlist = FALSE,
+    separate = TRUE,
+    strip = FALSE,
+    unique = FALSE,
+    char.keep = NULL,
+    names = FALSE,
+    ignore.case = TRUE,
+    apostrophe.remove = FALSE
+  )
+  combine_1 <- combine_words(
+    without_stopwords[[1]],
+    sep = " "
+  )
+  combine =paste("", combine_1,"")
+  desc_cleaned <- append(desc_cleaned, removePunctuation(combine))
+}
+
+# the dim of d is 590*16202. After removing all the punctuations and stopwords, its dimension is 590*13823.
+d_cleaned <- quanteda::dfm(desc_cleaned, verbose = FALSE)
+
+dim(d_cleaned)
+
+#l <- sapply(desc,len)
+#desc_dtm <- DocumentTermMatrix(desc[[1]])
+target_freq_1 <- as.numeric(d_cleaned)
+freqs_mat_1 <- as.matrix(d_cleaned)
+doc_freq_1 <- apply(freqs_mat_1,2,function(x) mean(x>0))
+idf_1 <- 1/doc_freq_1
+idf_mat_1 <- rep(idf_1,nrow(freqs_mat_1), byrow = TRUE, nrow = nrow(freqs_mat_1))
+tf_idf_1 <- freqs_mat_1 * idf_mat_1
+```
 
