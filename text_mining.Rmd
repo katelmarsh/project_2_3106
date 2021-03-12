@@ -10,6 +10,10 @@ library(jsonlite)
 library(tm)
 library(qdap)
 library(overlap)
+library(methods)
+library(quanteda)
+library(dplyr)
+library(tidytext)
 
 job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2020_09_20.json')
 names(job_desc)
@@ -33,8 +37,7 @@ for (i in 1:length(description)){
   }
 }
 
-library(methods)
-library(quanteda)
+
 # data("data_corpus_inaugural", package = "quanteda")
 d <- quanteda::dfm(desc, verbose = FALSE)
 
@@ -124,9 +127,9 @@ for (i in 1:nrow(tf_idf_1)){
 }
 
 ```
-For each job description(each row in the tf_ids_1), I get the top 5 tokens with the highest tf-idf value. We can also extract the top 5 tokens with highest tf-idf scores in our resume, and see if there will be some tokens overlapping between the job description and the resume.
+For each job description(each row in the tf_ids_1), I get the top `r k` tokens with the highest tf-idf value. We can also extract the top 5 tokens with highest tf-idf scores in our resume, and see if there will be some tokens overlapping between the job description and the resume.
 
-```{r}
+```{r trying to extract keyword in resume using tf_idf}
 real_resume <- read_docx("Li_Jiaxin_resume.docx")
 
 # real_resume <- paste(real_resume,collapse="")
@@ -153,3 +156,32 @@ for (i in 1:nrow(tf_idf_1)){
 ```
 
 It is awkward that none of the job desc has over lap with my resume...
+
+```{r tring another way to extract most frequent tokens as keywords in my resume}
+text <- paste(real_resume,collapse="")
+text <- paste(text, collapse = " ")
+text <- str_replace_all(text, pattern = '\"', replacement = "") # Remove slashes
+text <- str_replace_all(text, pattern = '\n', replacement = "") # Remove \n
+text <- str_replace_all(text, pattern = '\u0092', replacement = "'") #Replace with quote
+text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace with quote
+
+
+text_df <- data_frame(Text = text) # tibble aka neater data frame
+
+text_words <- text_df %>% unnest_tokens(output = word, input = Text) 
+data(stop_words) # Stop words.
+
+text_words  <- text_words  %>% anti_join(stop_words) 
+
+
+text_wordcounts <- text_words  %>% count(word, sort = TRUE)
+keywords_in_resume <- text_wordcounts$word[1:100]
+
+overlap_keyword <- c()
+for (i in 1:nrow(tf_idf_1)){
+  keyword_job_desc <- key_words[i,]
+  overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
+}
+sum(overlap_keyword)
+```
+Still doesn't work...
