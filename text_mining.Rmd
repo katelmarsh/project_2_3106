@@ -9,6 +9,8 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 library(jsonlite)
 library(tm)
 library(qdap)
+library(overlap)
+
 job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2020_09_20.json')
 names(job_desc)
 job_desc$request_params[[1]] #not na 1
@@ -78,7 +80,7 @@ desc_cleaned <- c()
 for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
     desc[i],
-    stopwords = qdapDictionaries::Top25Words,
+    stopwords = qdapDictionaries::Top200Words,
     unlist = FALSE,
     separate = TRUE,
     strip = FALSE,
@@ -96,7 +98,7 @@ for (i in seq_along(desc)){
   desc_cleaned <- append(desc_cleaned, removePunctuation(combine))
 }
 
-# the dim of d is 590*16202. After removing all the punctuations and stopwords, its dimension is 590*13823.
+# the dim of d is 590*16202. After removing all the punctuations and stopwords, its dimension is 590*13732.
 d_cleaned <- quanteda::dfm(desc_cleaned, verbose = FALSE)
 
 dim(d_cleaned)
@@ -109,5 +111,45 @@ doc_freq_1 <- apply(freqs_mat_1,2,function(x) mean(x>0))
 idf_1 <- 1/doc_freq_1
 idf_mat_1 <- rep(idf_1,nrow(freqs_mat_1), byrow = TRUE, nrow = nrow(freqs_mat_1))
 tf_idf_1 <- freqs_mat_1 * idf_mat_1
+
 ```
 
+```{r}
+# get the top k tokens with the highest tf-idf value
+k <- 10
+i <- 1
+keyword_lists <- data.frame(matrix(NA, nrow = nrow(tf_idf_1), ncol = k))
+for (i in 1:nrow(tf_idf_1)){
+  keyword_lists[i,] <- names(tf_idf_1[i,][order(tf_idf_1[i,],decreasing = TRUE)[1:k]])
+}
+
+```
+For each job description(each row in the tf_ids_1), I get the top 5 tokens with the highest tf-idf value. We can also extract the top 5 tokens with highest tf-idf scores in our resume, and see if there will be some tokens overlapping between the job description and the resume.
+
+```{r}
+real_resume <- read_docx("Li_Jiaxin_resume.docx")
+
+# real_resume <- paste(real_resume,collapse="")
+# transform it into a term document matrix
+resume <- quanteda::dfm(real_resume, verbose = FALSE)
+
+target_freq_resume <- as.numeric(resume)
+freqs_mat_resume <- as.matrix(resume)
+doc_freq_resume <- apply(freqs_mat_resume,2,function(x) mean(x>0))
+idf_resume <- 1/doc_freq_resume
+idf_mat_resume <- rep(idf_resume,nrow(freqs_mat_resume), byrow = TRUE, nrow = nrow(freqs_mat_resume))
+tf_idf_resume <- freqs_mat_resume * idf_mat_resume
+
+keywords_in_resume <- names(tf_idf_resume[1,][order(tf_idf_1[1,],decreasing = TRUE)[1:k]])
+```
+
+```{r}
+overlap_keyword <- c()
+for (i in 1:nrow(tf_idf_1)){
+  keyword_job_desc <- key_words[i,]
+  overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
+}
+
+```
+
+It is awkward that none of the job desc has over lap with my resume...
