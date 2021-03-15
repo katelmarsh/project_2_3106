@@ -130,7 +130,12 @@ for (i in 1:nrow(tf_idf_1)){
 For each job description(each row in the tf_ids_1), I get the top `r k` tokens with the highest tf-idf value. We can also extract the top 5 tokens with highest tf-idf scores in our resume, and see if there will be some tokens overlapping between the job description and the resume.
 
 ```{r trying to extract keyword in resume using tf_idf}
+# give priority on the resume. 
+# cooccurance- build up association between words 
+data(stop_words) # Stop words.
 real_resume <- read_docx("Li_Jiaxin_resume.docx")
+real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
+
 
 # real_resume <- paste(real_resume,collapse="")
 # transform it into a term document matrix
@@ -169,7 +174,7 @@ text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace wi
 text_df <- data_frame(Text = text) # tibble aka neater data frame
 
 text_words <- text_df %>% unnest_tokens(output = word, input = Text) 
-data(stop_words) # Stop words.
+
 
 text_words  <- text_words  %>% anti_join(stop_words) 
 
