@@ -56,6 +56,8 @@ tf_idf <- freqs_mat * idf_mat
 
 ```
 
+### USE THIS METHOD OF READING IN THE DESCRIPTIONS!!! 
+# Used Ding Zhou's 2/27/20 Homework 7 Solution for Applied Stat Computing as a reference!
 
 ```{r json in a different way}
 library(jsonlite)
