@@ -57,6 +57,55 @@ tf_idf <- freqs_mat * idf_mat
 ```
 
 
+```{r json in a different way}
+library(jsonlite)
+library(tm)
+library(qdap)
+library(overlap)
+library(methods)
+library(quanteda)
+library(dplyr)
+library(tidytext)
+library(knitr)
+library(qdap)
+
+job_desc <- read_json('~/Downloads/indeed_job_descs_2020_09_20.json')
+
+job_descriptions_list <- c()
+for(j in seq_len(length(job_desc))){
+  for (ii in seq_len(length(job_desc[[j]]$job_descriptions))){
+    job_descriptions_list[ii] <- job_desc[[j]]$job_descriptions[[ii]]
+  }
+}
+head(job_descriptions_list)
+
+d <- quanteda::dfm(job_descriptions_list, verbose = FALSE)
+
+dim(d)
+
+#l <- sapply(desc,len)
+#desc_dtm <- DocumentTermMatrix(desc[[1]])
+target_freq <- as.numeric(d)
+freqs_mat <- as.matrix(d)
+doc_freq <- apply(freqs_mat,2,function(x) mean(x>0))
+idf <- 1/doc_freq
+idf_mat <- rep(idf,nrow(freqs_mat), byrow = TRUE, nrow = nrow(freqs_mat))
+tf_idf <- freqs_mat * idf_mat
+
+
+
+split_job_description <- function(job_descriptions_entry){
+  transform_dat <- gsub("[^[:alnum:]_]", " ", job_descriptions_entry)
+  # an alternative solution would be gsub("[^a-zA-Z0-9_]", " ", job_descriptions_entry)
+  transform_dat <- strsplit(transform_dat, split=" ")[[1]]
+  transform_dat <- transform_dat[transform_dat!=""]
+  return(transform_dat)
+}
+
+job_descriptions_list <- lapply(job_desc$job_descriptions, split_job_description)
+
+```
+
 ```{r pca}
 pr_out <- prcomp(tf_idf, scale=TRUE) #look at names of pr_out 
 eigen_val <- pr_out$sdev^2 
@@ -69,7 +118,7 @@ k <- 3 # could be anywhere from 2-4
 plot(pr_out$rotation[, k])
 head(pr_out$rotation[,k]) #these are the loadings 
 abline(h = 0)
-which(abs(pr_out$rotation[, k]) > 0.08)
+which(abs(pr_out$rotation[, k]) > 0.05)
 ```
 
 The some of the loadings are who, we, are, :, cardinal, and financial. 
@@ -200,7 +249,7 @@ library(officer)
 # give priority on the resume. 
 # cooccurance- build up association between words 
 data(stop_words) # Stop words.
-real_resume <- read_docx("MarshResumeJan2021.docx")
+real_resume <- read_docx("MarshResumeJan2021_for_class.docx")
 real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
 
 
@@ -255,3 +304,28 @@ for (i in 1:nrow(tf_idf_1)){
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
 sum(overlap_keyword)
+
+```
+
+
+```{r logistic model}
+library(glmnet)
+
+log_df1 = cbind(d, as.matrix(tf_idf))
+log_df <- log_df1[,unique(colnames(log_df1))]
+#log_df<-sapply(log_df1, function(x) as.character(x))
+
+# this does not work. I am not sure why. 
+
+is_train <- sample(nrow(log_df),nrow(log_df)*0.80)
+job.train = log_df[is_train,]
+job.test = log_df[-is_train,]
+
+logit_mod <- glm(docs ~ .,
+                    family = "binomial",
+                    data = job.train)
+pred.glm = as.numeric(predict(logit_mod, job.test, type="response") > 0.5)
+
+```
+
+
