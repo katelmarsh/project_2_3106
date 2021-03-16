@@ -251,7 +251,7 @@ library(officer)
 # give priority on the resume. 
 # cooccurance- build up association between words 
 data(stop_words) # Stop words.
-real_resume <- read_docx("MarshResumeJan2021_for_class.docx")
+real_resume <- readLines("~/Downloads/MarshResumeJan2021_Data_Mining.txt")
 real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
 
 
@@ -272,7 +272,7 @@ keywords_in_resume <- names(tf_idf_resume[1,][order(tf_idf_1[1,],decreasing = TR
 ```{r KATE RESUME}
 overlap_keyword <- c()
 for (i in 1:nrow(tf_idf_1)){
-  keyword_job_desc <- key_words[i,]
+  keyword_job_desc <- keyword_lists[i,]
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
 
@@ -302,7 +302,7 @@ keywords_in_resume <- text_wordcounts$word[1:100]
 
 overlap_keyword <- c()
 for (i in 1:nrow(tf_idf_1)){
-  keyword_job_desc <- key_words[i,]
+  keyword_job_desc <- keyword_lists[i,]
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
 sum(overlap_keyword)
