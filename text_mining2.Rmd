@@ -18,6 +18,8 @@ library(stringr)
 library(officer)
 library(glmnet)
 library(knitr)
+library(stringi)
+
 
 job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2021_03_16.json')
 names(job_desc)
@@ -87,7 +89,8 @@ desc_cleaned <- c()
 for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
     desc[i],
-    stopwords = qdapDictionaries::Top200Words,
+    stopwords = qdapDictionaries::Top200Words, 
+    # ADD c("work experience", "skills", "employment", "objective", "awards", "honors", "gpa")
     unlist = FALSE,
     separate = TRUE,
     strip = FALSE,
@@ -194,7 +197,6 @@ Still doesn't work...
 
 
 ```{r KATE RESUME: trying to extract keyword in resume using tf_idf}
-library(stringi)
 
 # give priority on the resume. 
 # cooccurance- build up association between words 
@@ -208,7 +210,7 @@ resume <- quanteda::dfm(real_resume_k, verbose = FALSE)
 #non_stop_cols <- stopwords(colnames(resume))
 stops <- stopwords("smart")
 cols <- removePunctuation(colnames(resume), preserve_intra_word_contractions = TRUE, preserve_intra_word_dashes = TRUE)
-colnames(cols["klm2244columbiaedu"]) <- "klm2244columbia.edu"
+#colnames(cols["klm2244columbiaedu"]) <- "klm2244columbia.edu"
 keep_cols <- cols[!cols %in% stops]# colnames w/o stopwords
 keep_cols <- rm_number(cols, trim = TRUE, clean = TRUE)
 keep_cols <- stri_remove_empty(keep_cols)
