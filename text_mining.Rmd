@@ -15,7 +15,7 @@ library(quanteda)
 library(dplyr)
 library(tidytext)
 
-job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2020_09_20.json')
+job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2021_03_16.json')
 names(job_desc)
 job_desc$request_params[[1]] #not na 1
 job_desc$job_descriptions[[45]]  # not na 2
@@ -79,6 +79,7 @@ TF-IDF does seem to be important though because it has revealed that the job des
 
 
 ```{r remove stopwords and punctuations}
+library(knitr)
 desc_cleaned <- c()
 for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
