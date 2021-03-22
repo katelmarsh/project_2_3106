@@ -258,12 +258,26 @@ sum(overlap_keyword)
 
 ```
 
+```{r}
+
+# bind tf_idf_1 
+
+
+hclus_out <- hclust(dist(cbind(x, y)), "single") #cbind to make a matrix 
+hclus_out <- hclust(dist(log_df1), "single") #cbind to make a matrix 
+plot(hclus_out)
+clus_est <- cutree(hclus_out, k=15)
+plot(tf_idf_1, pch=16,
+     col=c("red", "blue", "black", "green", "purple", "orange", "yellow", "grey", "pink", "navy","tan", "violet", "cyan")[clus_est])
+
+```
+
+
 
 ```{r logistic model}
 library(glmnet)
 
-log_df1 = cbind(d, as.matrix(tf_idf))
-log_df <- log_df1[,unique(colnames(log_df1))]
+
 #log_df<-sapply(log_df1, function(x) as.character(x))
 
 # this does not work. I am not sure why. 
