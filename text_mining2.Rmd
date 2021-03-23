@@ -305,6 +305,79 @@ desc[,c(263, 323)]
 
 ```
 
+
+```{r}
+km_out <- kmeans(mat_tf_idf, centers = 8)
+names(km_out) # $cluster is the assignment to the cluster 
+length(km_out$cluster)
+table(km_out$cluster)
+# km_out$centers 
+km_out$centers 
+# j is the TRUE assignment 
+mean(km_out$cluster==j) # xbar and ybar in the different groups 
+# NOT a good way to evaluate 
+table(km_out$cluster, j)
+
+
+cols <- c("red", "blue", "green", "purple", "yellow", "orange", "pink", "grey")
+plot(tf_idf_1,
+     col=cols[km_out$cluster],
+     pch=16)
+```
+
+```{r}
+# TF-IDF and cosine similarity
+#tfidf <- t(dtm[ , tf_mat$term ]) * tf_mat$idf
+#tfidf <- t(tfidf)
+
+# changing cosine similarity to a distance 
+csim <- tf_idf_1 / sqrt(rowSums(tf_idf_1 * tf_idf_1))
+csim <- csim %*% t(csim)
+cdist <- as.dist(1 - csim)
+
+#h clust 
+k <- 16
+hc <- hclust(cdist, "complete")
+clustering <- cutree(hc, k)
+plot(hc, main = "Hierarchical Clustering of TF-IDF")
+rect.hclust(hc, k, border = "red")
+
+p_words <- colSums(freqs_mat_1) / sum(freqs_mat_1)
+cluster_words <- lapply(unique(clustering), function(x){
+  rows <- freqs_mat_1[clustering == x,]
+  # for memory's sake, drop all words that don't appear in the cluster
+  rows <- rows[ , colSums(rows) > 0 ]
+  colSums(rows) / sum(rows) - p_words[ colnames(rows) ]
+})
+```
+
+```{r visualization}
+cluster_summary <- data.frame(cluster = unique(clustering),
+                              size = as.numeric(table(clustering)),
+                              top_words = sapply(cluster_words, function(d){
+                                paste(
+                                  names(d)[ order(d, decreasing = TRUE) ][ 1:5 ], 
+                                  collapse = ", ")
+                              }),
+                              stringsAsFactors = FALSE)
+cluster_summary
+
+library(wordcloud)
+wordcloud::wordcloud(words = names(cluster_words[[ 4 ]]), 
+                     freq = cluster_words[[ 4 ]], 
+                     max.words = 25, 
+                     random.order = FALSE, 
+                     colors = c("red", "yellow", "blue1", 
+                                "green1", "purple", "black", 
+                                "grey", "orange", "pink", 
+                                "blue2", "green2", "purple2",
+                                "yellow2", "blue3", "green3",
+                                "pink2", "red2", "orange2"
+                                ),
+                     main = "Top words in cluster 100")
+
+```
+
 ```{r logistic model}
 
 log_df1 = cbind(d, as.matrix(tf_idf))
