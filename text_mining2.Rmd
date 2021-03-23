@@ -327,8 +327,8 @@ plot(tf_idf_1,
 
 ```{r}
 # TF-IDF and cosine similarity
-#tfidf <- t(dtm[ , tf_mat$term ]) * tf_mat$idf
-#tfidf <- t(tfidf)
+# document clustering! with https://cran.r-project.org/web/packages/textmineR/vignettes/b_document_clustering.html
+
 
 # changing cosine similarity to a distance 
 csim <- tf_idf_1 / sqrt(rowSums(tf_idf_1 * tf_idf_1))
@@ -377,6 +377,33 @@ wordcloud::wordcloud(words = names(cluster_words[[ 4 ]]),
                      main = "Top words in cluster 100")
 
 ```
+
+```{r diversity funcs}
+
+groups = c()
+  for (i in 1:length(description)){
+    for (j in 1:length(description[[i]])){
+      if (is.na(description[[i]][j])){
+        next
+      }
+    groups <- append(groups,j)
+    }
+  }
+does_work_idk <- cut(groups,breaks=1,include.lowest=TRUE,labels=c(job_desc$request_params$q))
+  
+get_group <- function(input_num){
+  grouped <- groups[input_num]
+  return(job_desc$request_params$q[grouped])
+}
+get_group(182)
+
+get_cluster <- function(input_num){
+  return(clustering[[as.character(paste0("text", input_num))]])
+}
+get_cluster(182)
+
+```
+
 
 ```{r logistic model}
 
