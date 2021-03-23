@@ -336,7 +336,7 @@ csim <- csim %*% t(csim)
 cdist <- as.dist(1 - csim)
 
 #h clust 
-k <- 16
+k <- 18
 hc <- hclust(cdist, "complete")
 clustering <- cutree(hc, k)
 plot(hc, main = "Hierarchical Clustering of TF-IDF")
