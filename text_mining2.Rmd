@@ -90,7 +90,6 @@ for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
     desc[i],
     stopwords = qdapDictionaries::Top200Words, 
-    # ADD c("work experience", "skills", "employment", "objective", "awards", "honors", "gpa")
     unlist = FALSE,
     separate = TRUE,
     strip = FALSE,
@@ -100,8 +99,19 @@ for (i in seq_along(desc)){
     ignore.case = TRUE,
     apostrophe.remove = FALSE
   )
+  text <- unlist(without_stopwords)
+  text <- str_replace_all(text, pattern = '\n', replacement = "") # Remove \n
+  text <- str_replace_all(text, pattern = '\u0092', replacement = "'") #Replace with quote
+  text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace with quote
+  text <- str_replace_all(text, pattern = '[:punct:]', replacement = "") #Remove punctuation
+  text <- str_replace_all(text, pattern = '$', replacement = "") #Remove punctuation
+  text <- str_replace_all(text, pattern = '-', replacement = "") #Remove punctuation
+  text <- str_replace_all(text, pattern = '·', replacement = "") #Remove punctuation
+  text <- str_replace_all(text, pattern = '[0-9]+', replacement = "") #Remove numbers
+  #text <- str_replace_all(text, pattern = 'per', replacement = "") #Remove numbers
+  without_stopwords <- as.list(text)
   combine_1 <- combine_words(
-    without_stopwords[[1]],
+    without_stopwords,
     sep = " "
   )
   combine =paste("", combine_1,"")
@@ -175,6 +185,11 @@ text <- str_replace_all(text, pattern = '\"', replacement = "") # Remove slashes
 text <- str_replace_all(text, pattern = '\n', replacement = "") # Remove \n
 text <- str_replace_all(text, pattern = '\u0092', replacement = "'") #Replace with quote
 text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace with quote
+text <- str_replace_all(text, pattern = '-', replacement = "") #Remove dashes
+text <- str_replace_all(text, pattern = '[0-9]+', replacement = "") #Remove numbers
+text <- str_replace_all(text, pattern = '\u0092', replacement = "'") #Replace with quote
+text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace with quote
+text <- str_replace_all(text, pattern = '·', replacement = "") #Remove dots
 
 
 text_df <- data_frame(Text = text) # tibble aka neater data frame
@@ -249,6 +264,7 @@ text <- str_replace_all(text, pattern = '-', replacement = "") #Remove dashes
 text <- str_replace_all(text, pattern = '[0-9]+', replacement = "") #Remove dashes
 text <- str_replace_all(text, pattern = '\u0092', replacement = "'") #Replace with quote
 text <- str_replace_all(text, pattern = '\u0091', replacement = "'") #Replace with quote
+text <- str_replace_all(text, pattern = '·', replacement = "") #Remove dashes
 
 text_df <- data_frame(Text = text) # tibble aka neater data frame
 text_words <- text_df %>% unnest_tokens(output = word, input = Text) 
@@ -276,7 +292,7 @@ desc[26]
 
 intersect(which(grepl("sustainab", desc, ignore.case = TRUE)), highly_relevant)
 
-desc[] #checking on things that would be close to my resume 
+#desc[] #checking on things that would be close to my resume 
 sort(tf_idf_1[847,],decreasing=TRUE) 
   
 #rownames(tf_idf_1) == tf_idf_1[overlap_keyword,]
@@ -336,11 +352,13 @@ csim <- csim %*% t(csim)
 cdist <- as.dist(1 - csim)
 
 #h clust 
-k <- 18
-hc <- hclust(cdist, "complete")
-clustering <- cutree(hc, k)
-plot(hc, main = "Hierarchical Clustering of TF-IDF")
-rect.hclust(hc, k, border = "red")
+k <- 17
+hc <- hclust(cdist, "ward.D2")
+plot(hc)
+clustering <- cutree(hc, h=2)
+plot(hc, main = "'Complete' Hierarchical Clustering of Job Description TF-IDF",
+     xlab = "Cosine Similarity as Distance")
+rect.hclust(hc, k, border = "#e56b6f")
 
 p_words <- colSums(freqs_mat_1) / sum(freqs_mat_1)
 cluster_words <- lapply(unique(clustering), function(x){
@@ -352,6 +370,7 @@ cluster_words <- lapply(unique(clustering), function(x){
 ```
 
 ```{r visualization}
+library(formattable)
 cluster_summary <- data.frame(cluster = unique(clustering),
                               size = as.numeric(table(clustering)),
                               top_words = sapply(cluster_words, function(d){
@@ -360,21 +379,16 @@ cluster_summary <- data.frame(cluster = unique(clustering),
                                   collapse = ", ")
                               }),
                               stringsAsFactors = FALSE)
-cluster_summary
+formattable(cluster_summary)
 
 library(wordcloud)
-wordcloud::wordcloud(words = names(cluster_words[[ 4 ]]), 
-                     freq = cluster_words[[ 4 ]], 
+wordcloud::wordcloud(words = names(cluster_words[[ 2 ]]), 
+                     freq = cluster_words[[ 2 ]], 
                      max.words = 25, 
                      random.order = FALSE, 
-                     colors = c("red", "yellow", "blue1", 
-                                "green1", "purple", "black", 
-                                "grey", "orange", "pink", 
-                                "blue2", "green2", "purple2",
-                                "yellow2", "blue3", "green3",
-                                "pink2", "red2", "orange2"
-                                ),
-                     main = "Top words in cluster 100")
+                     colors = c("#eaac8b", "#355070", "#6d597a", "grey", 
+                                "#b56576", "#e56b6f"),
+                     main = "Top 25 words in cluster 4")
 
 ```
 
@@ -391,11 +405,7 @@ groups = c()
   }
 researchers_2 <- which(groups == 15)
 groups[researchers_2] <- 14
-
 length(unique(groups))
-hist(groups,
-     main = "Histogram Showing Different Job Titles",
-     xlab = job_desc$request_params$q)
 
   
 get_group <- function(input_num){
@@ -409,8 +419,59 @@ get_cluster <- function(input_num){
 }
 get_cluster(182)
 
-```
 
+
+library(ggplot2)
+library(waffle)
+
+nyc_calls$borough <- borough 
+borough_csv <- write.csv(nyc_calls$borough, file="311_boroughs.csv")
+table(nyc_calls$borough) 
+nyc_calls$borough[nyc_calls$borough == "Bronx County"] <- "Bronx"
+
+nyc_calls$borough <- replace(nyc_calls$borough, nyc_calls$borough == 'Bronx County' | nyc_calls$borough == 'New York City Housing Authority Pelham Community Housing' | nyc_calls$borough == 'The Bronx', "Bronx") # replacing weird values for Bronx 
+
+nyc_calls$borough <- replace(nyc_calls$borough, nyc_calls$borough == 'Queens County', "Queens") # replacing weird values for Queens 
+
+
+hist(groups,
+     main = "Histogram Showing Different Job Titles", 
+     labels=job_desc$request_params$q
+     )
+#table(groups)
+
+library(ggpubr)
+
+
+gghistogram(groups, 
+          #x = "gene", y = "citation_index",
+          fill = "lightgray", 
+          #xlab = "Gene name", ylab = "Citation index",
+          bins = 25, 
+          
+          )
+labels <- unique(job_desc$request_params$q)
+tabled <- as.data.frame(table(groups))
+
+# https://coolors.co/355070-6d597a-b56576-e56b6f-eaac8b
+g <- ggplot(tabled, aes(groups, Freq)) 
+g + geom_bar(stat="identity", width = 0.5, fill="#355070") + 
+      labs(title="Job Descriptions in Each Group", 
+           caption="Source: Indeed.com, Mar. 16, 2021") + 
+  theme(axis.text.x = element_text(angle=45, vjust=1, hjust = 1)) +
+  scale_x_discrete(labels=c(labels))
+
+```
+```{r ggplot chunks}
+
+g <- ggplot(tabled, aes(groups, Freq)) 
+g + geom_bar(stat="identity", width = 0.5, fill="#355070") + 
+      labs(title="Job Descriptions in Each Group", 
+           caption="Source: Indeed.com, Mar. 16, 2021") + 
+  theme(axis.text.x = element_text(angle=45, vjust=1, hjust = 1)) +
+  scale_x_discrete(labels=c(labels))
+
+```
 
 ```{r logistic model}
 
