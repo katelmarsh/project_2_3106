@@ -463,10 +463,11 @@ g + geom_bar(stat="identity", width = 0.5, fill="#355070") +
 
 ```
 ```{r ggplot chunks}
-
-g <- ggplot(tabled, aes(groups, Freq)) 
+clusters <- clustering 
+tabled <- as.data.frame(table(clusters))
+g <- ggplot(tabled, aes(clusters, Freq)) 
 g + geom_bar(stat="identity", width = 0.5, fill="#355070") + 
-      labs(title="Job Descriptions in Each Group", 
+      labs(title="Job Descriptions in Each Cluster", 
            caption="Source: Indeed.com, Mar. 16, 2021") + 
   theme(axis.text.x = element_text(angle=45, vjust=1, hjust = 1)) +
   scale_x_discrete(labels=c(labels))
