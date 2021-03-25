@@ -389,7 +389,14 @@ groups = c()
     groups <- append(groups,j)
     }
   }
-does_work_idk <- cut(groups,breaks=1,include.lowest=TRUE,labels=c(job_desc$request_params$q))
+researchers_2 <- which(groups == 15)
+groups[researchers_2] <- 14
+
+length(unique(groups))
+hist(groups,
+     main = "Histogram Showing Different Job Titles",
+     xlab = job_desc$request_params$q)
+
   
 get_group <- function(input_num){
   grouped <- groups[input_num]
