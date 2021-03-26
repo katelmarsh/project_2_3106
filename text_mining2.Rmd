@@ -62,7 +62,7 @@ tf_idf <- freqs_mat * idf_mat
 
 
 ```{r pca}
-pr_out <- prcomp(tf_idf, scale=TRUE) #look at names of pr_out 
+pr_out <- prcomp(tf_idf_1, scale=TRUE) #look at names of pr_out 
 eigen_val <- pr_out$sdev^2 
 plot(cumsum(eigen_val) / sum(eigen_val))
 abline(h=.9)
@@ -73,7 +73,7 @@ k <- 3 # could be anywhere from 2-4
 plot(pr_out$rotation[, k])
 head(pr_out$rotation[,k]) #these are the loadings 
 abline(h = 0)
-which(abs(pr_out$rotation[, k]) > 0.08)
+which(abs(pr_out$rotation[, k]) > 0.06)
 ```
 
 The some of the loadings are who, we, are, :, cardinal, and financial. 
