@@ -493,3 +493,71 @@ pred.glm = as.numeric(predict(logit_mod, job.test, type="response") > 0.5)
 ```
 
 
+
+```{r recommendation algorightm}
+recommend_resume <- function(file_path = file_path, n_recommendations = n_recommendations){
+  # give priority on the resume. 
+  # cooccurance- build up association between words 
+  data(stop_words) # Stop words.
+  real_resume <- read_docx(file_path)
+  real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
+  
+  real_resume <- paste(real_resume,collapse="")
+  # transform it into a term document matrix
+  resume <- quanteda::dfm(real_resume, verbose = FALSE)
+  
+  target_freq_resume <- as.numeric(resume)
+  freqs_mat_resume <- as.matrix(resume)
+  doc_freq_resume <- apply(freqs_mat_resume,2,function(x) mean(x>0))
+  idf_resume <- 1/doc_freq_resume
+  idf_mat_resume <- rep(idf_resume,nrow(freqs_mat_resume), byrow = TRUE, nrow = nrow(freqs_mat_resume))
+  tf_idf_resume <- freqs_mat_resume * idf_mat_resume
+  
+  names(tf_idf_resume) <- colnames(tf_idf_resume)
+  names(tf_idf_1) <- colnames(tf_idf_1)
+  resume_desc <- as.matrix(bind_rows(tf_idf_resume,tf_idf_1))
+  resume_desc[which(is.na(resume_desc))] <- 0
+  names(resume_desc) <- colnames(resume_desc)
+  similarities <- sim2(resume_desc, method = "cosine", norm = "l2") 
+  colnames(similarities) <- c('resume',1:nrow(tf_idf_1))
+  get_similar_letters <- function(similarities, reference_letter, n_recommendations){
+    sort(similarities[reference_letter, ], decreasing = TRUE)[1:(1 + n_recommendations)]
+  }
+  
+  # how many keywords overlap
+  
+  index <-names(get_similar_letters(similarities, 1, n_recommendations))[-1]
+  true_index <- as.numeric(index)-1
+  similarity <- get_similar_letters(similarities, 1, n_recommendations)[-1]
+  names(similarity) <- true_index
+  
+  position = c()
+  for (i in 1:length(description)){
+    for (j in 1:length(description[[i]])){
+      if (is.na(description[[i]][j])){
+        next
+      }
+      position <- append(position,position_names[j])
+    }
+  }
+  
+  recommended_position = position[true_index]
+  names(recommended_position) = true_index
+  cluster_name = clustering[true_index]
+  names(cluster_name) = true_index
+  
+  recommended_result = rbind(similarity,recommended_position,cluster_name)
+  return(recommended_result)
+}
+```
+
+```{r}
+library(text2vec)
+n_recommendations = 10
+file_path = "MarshResumeJan2021_for_class.docx"
+position_names <- job_desc$request_params[[1]] #not na 1
+
+result <- recommend_resume(file_path, n_recommendations)
+```
+
+
