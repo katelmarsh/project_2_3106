@@ -535,13 +535,29 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
   cluster_name = clustering[true_index]
   names(cluster_name) = true_index
   
-  recommended_result = rbind(similarity,recommended_position,cluster_name)
+  normalize <- function(x) {
+    return ((x - min(x)) / (max(x) - min(x)))
+  }
+  good_metric <- normalize(similarity)
+  
+  diversity_metric <- rep(0, length(recommended_position))
+  for(j in 1:n_recommendations){
+    for(i in 1:length(recommended_position)){
+      if(recommended_position[j] ==  recommended_position[i]){
+        diversity_metric[i] <- diversity_metric[i]+1}
+      if(cluster_name[j] ==  cluster_name[i]){
+        diversity_metric[i] <- diversity_metric[i]+1}
+    } 
+    diversity_metric[j] <- diversity_metric[j]-2
+  }
+  
+  recommended_result = rbind(similarity,recommended_position,cluster_name, good_metric, diversity_metric)
   return(recommended_result)
 }
 ```
 
 ```{r}
-n_recommendations = 200
+n_recommendations = 5
 #file_path = "MarshResumeJan2021_Data_Mining.txt"
 file_path = "Li_Jiaxin_resume.txt"
 
@@ -566,9 +582,7 @@ similarities[869]
 
 ```{r}
 # good metric is similarity metric normalized 
-normalize <- function(x) {
-  return ((x - min(x)) / (max(x) - min(x)))
-}
+
 
 good_score <- normalize(as.numeric(result["similarity",]))
 
