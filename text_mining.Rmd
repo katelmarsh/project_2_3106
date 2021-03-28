@@ -14,6 +14,8 @@ library(methods)
 library(quanteda)
 library(dplyr)
 library(tidytext)
+library(tidyverse)
+library(text2vec)
 
 job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2021_03_16.json')
 names(job_desc)
@@ -258,26 +260,12 @@ sum(overlap_keyword)
 
 ```
 
-```{r}
-
-# bind tf_idf_1 
-
-
-hclus_out <- hclust(dist(cbind(x, y)), "single") #cbind to make a matrix 
-hclus_out <- hclust(dist(log_df1), "single") #cbind to make a matrix 
-plot(hclus_out)
-clus_est <- cutree(hclus_out, k=15)
-plot(tf_idf_1, pch=16,
-     col=c("red", "blue", "black", "green", "purple", "orange", "yellow", "grey", "pink", "navy","tan", "violet", "cyan")[clus_est])
-
-```
-
-
 
 ```{r logistic model}
 library(glmnet)
 
-
+log_df1 = cbind(d, as.matrix(tf_idf))
+log_df <- log_df1[,unique(colnames(log_df1))]
 #log_df<-sapply(log_df1, function(x) as.character(x))
 
 # this does not work. I am not sure why. 
@@ -296,3 +284,69 @@ pred.glm = as.numeric(predict(logit_mod, job.test, type="response") > 0.5)
 
 =======
 >>>>>>> 561f9b0f75eff4be8a643139669291bb12fece38
+
+```{r}
+similarities_0 <- sim2(tf_idf_1, method = "cosine", norm = "l2") 
+get_similar_letters <- function(similarities, reference_letter, n_recommendations = 8){
+  sort(similarities[reference_letter, ], decreasing = TRUE)[1:(2 + n_recommendations)]
+}
+get_similar_letters(similarities_0, 1)
+
+```
+
+```{r similarity}
+names(tf_idf_resume) <- colnames(tf_idf_resume)
+names(tf_idf_1) <- colnames(tf_idf_1)
+resume_desc <- as.matrix(bind_rows(tf_idf_resume,tf_idf_1))
+resume_desc[which(is.na(resume_desc))] <- 0
+names(resume_desc) <- colnames(resume_desc)
+similarities <- sim2(resume_desc, method = "cosine", norm = "l2") 
+colnames(similarities) <- c('resume',1:nrow(tf_idf_1))
+get_similar_letters <- function(similarities, reference_letter, n_recommendations = 8){
+  sort(similarities[reference_letter, ], decreasing = TRUE)[1:(2 + n_recommendations)]
+}
+get_similar_letters(similarities, 1)
+
+# how many keywords overlap
+
+index <-names(get_similar_letters(similarities, 1))[-1]
+get_substring <- function(string,nchar = 4){
+  return(substr(string,nchar+1,nchar(string)))
+}
+index_desc <- sapply(index,get_substring)
+index_true_desc_1 <- as.numeric(index_desc) - 1
+desc[412]
+```
+
+```{r}
+real_resume <- read_docx("MarshResumeJan2021_for_class.docx")
+real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
+
+
+# real_resume <- paste(real_resume,collapse="")
+# transform it into a term document matrix
+resume <- quanteda::dfm(real_resume, verbose = FALSE)
+
+target_freq_resume <- as.numeric(resume)
+freqs_mat_resume <- as.matrix(resume)
+doc_freq_resume <- apply(freqs_mat_resume,2,function(x) mean(x>0))
+idf_resume <- 1/doc_freq_resume
+idf_mat_resume <- rep(idf_resume,nrow(freqs_mat_resume), byrow = TRUE, nrow = nrow(freqs_mat_resume))
+tf_idf_resume_1 <- freqs_mat_resume * idf_mat_resume
+
+
+names(tf_idf_resume_1) <- colnames(tf_idf_resume_1)
+names(tf_idf_1) <- colnames(tf_idf_1)
+resume_desc_1 <- as.matrix(bind_rows(tf_idf_resume_1,tf_idf_1))
+resume_desc_1[which(is.na(resume_desc_1))] <- 0
+names(resume_desc_1) <- colnames(resume_desc_1)
+similarities_1 <- sim2(resume_desc_1, method = "cosine", norm = "l2") 
+colnames(similarities_1) <- c('resume',1:nrow(tf_idf_1))
+get_similar_letters <- function(similarities, reference_letter, n_recommendations = 8){
+  sort(similarities[reference_letter, ], decreasing = TRUE)[1:(2 + n_recommendations)]
+}
+get_similar_letters(similarities_1, 1)
+
+desc[412]
+```
+
