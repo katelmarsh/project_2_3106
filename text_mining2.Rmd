@@ -19,7 +19,12 @@ library(officer)
 library(glmnet)
 library(knitr)
 library(stringi)
-
+library(formattable)
+library(wordcloud)
+library(ggplot2)
+library(waffle)
+library(ggpubr)
+library(text2vec)
 
 job_desc <- jsonlite::fromJSON('~/Downloads/indeed_job_descs_2021_03_16.json')
 names(job_desc)
@@ -370,7 +375,6 @@ cluster_words <- lapply(unique(clustering), function(x){
 ```
 
 ```{r visualization}
-library(formattable)
 cluster_summary <- data.frame(cluster = unique(clustering),
                               size = as.numeric(table(clustering)),
                               top_words = sapply(cluster_words, function(d){
@@ -381,7 +385,6 @@ cluster_summary <- data.frame(cluster = unique(clustering),
                               stringsAsFactors = FALSE)
 formattable(cluster_summary)
 
-library(wordcloud)
 wordcloud::wordcloud(words = names(cluster_words[[ 2 ]]), 
                      freq = cluster_words[[ 2 ]], 
                      max.words = 25, 
@@ -420,27 +423,11 @@ get_cluster <- function(input_num){
 get_cluster(182)
 
 
-
-library(ggplot2)
-library(waffle)
-
-nyc_calls$borough <- borough 
-borough_csv <- write.csv(nyc_calls$borough, file="311_boroughs.csv")
-table(nyc_calls$borough) 
-nyc_calls$borough[nyc_calls$borough == "Bronx County"] <- "Bronx"
-
-nyc_calls$borough <- replace(nyc_calls$borough, nyc_calls$borough == 'Bronx County' | nyc_calls$borough == 'New York City Housing Authority Pelham Community Housing' | nyc_calls$borough == 'The Bronx', "Bronx") # replacing weird values for Bronx 
-
-nyc_calls$borough <- replace(nyc_calls$borough, nyc_calls$borough == 'Queens County', "Queens") # replacing weird values for Queens 
-
-
 hist(groups,
      main = "Histogram Showing Different Job Titles", 
      labels=job_desc$request_params$q
      )
 #table(groups)
-
-library(ggpubr)
 
 
 gghistogram(groups, 
@@ -552,12 +539,13 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
 ```
 
 ```{r}
-library(text2vec)
 n_recommendations = 10
-file_path = "MarshResumeJan2021_for_class.docx"
+#file_path = "MarshResumeJan2021_for_class.docx"
+file_path = "Li_Jiaxin_resume.docx"
 position_names <- job_desc$request_params[[1]] #not na 1
 
 result <- recommend_resume(file_path, n_recommendations)
+
 ```
 
 
