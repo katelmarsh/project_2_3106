@@ -93,7 +93,7 @@ TF-IDF does seem to be important though because it has revealed that the job des
 desc_cleaned <- c()
 for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
-    desc[i],
+    desc_example[i],
     stopwords = qdapDictionaries::Top200Words, 
     unlist = FALSE,
     separate = TRUE,
@@ -486,7 +486,9 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
   # give priority on the resume. 
   # cooccurance- build up association between words 
   data(stop_words) # Stop words.
-  real_resume <- read_docx(file_path)
+  #real_resume_k <- readLines("~/Downloads/MarshResumeJan2021_Data_Mining.txt")
+  #real_resume <- read_docx(file_path)
+  real_resume <- readLines(file_path)
   real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
   
   real_resume <- paste(real_resume,collapse="")
@@ -541,11 +543,55 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
 ```{r}
 n_recommendations = 10
 #file_path = "MarshResumeJan2021_for_class.docx"
-file_path = "Li_Jiaxin_resume.docx"
+file_path = "~/Downloads/MarshResumeJan2021_Data_Mining.txt"
+#file_path = "Li_Jiaxin_resume.docx"
 position_names <- job_desc$request_params[[1]] #not na 1
 
 result <- recommend_resume(file_path, n_recommendations)
 
 ```
+
+```{r evaluate recommendations}
+
+#IDK WHAT THIS IS 
+
+kate_example_job <- "The Sabin Center for Climate Change Law at Columbia Law School is seeking a few exceptional undergraduate and/or master’s students to serve as interns for summer 2021. Undergraduate and master’s-level interns work with the Center’s faculty director, Professor Michael Gerrard, Executive Director Michael Burger, and current fellows on a wide range of cutting-edge climate change, energy, and environmental policy issues. The Center does both domestic and international work on climate change mitigation and adaptation. Students will be assigned to projects that are policy oriented, or may work jointly with law student interns on projects with a legal component, and should receive broad exposure to the field of climate change law. Students with some background in environmental policy, energy policy and/or sustainable development are particularly encouraged to apply. Internships are full time for 8-10 weeks. Unfortunately, the Center is not able to provide funding for summer internships. Preference will be given to Columbia/Barnard students."
+
+desc_example <- c(desc, kate_example_job) 
+# index is 869 
+similarities[869]
+
+```
+
+```{r}
+# good metric is similarity metric normalized 
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+
+good_score <- normalize(as.numeric(result["similarity",]))
+
+# diversity metric is a scale of 0-2 with 0 being no overlap with first rec, 1 being 1 overlap, and 2 being two overlaps
+
+diversity_metric <- function(x) {
+  metric <- rep(0, n_recommendations)
+  for(i in 1:n_recommendations){
+    if(result["recommended_position", 1] ==  result["recommended_position", i]){
+      metric[i] <- metric[i]+1}
+    if(result["cluster_name", 1] ==  result["cluster_name", i]){
+      metric[i] <- metric[i]+1}
+  } 
+  metric[1] <- 0 
+  return(metric)
+}
+diverse_score <- diversity_metric(result)
+
+result <- rbind(result, good_score)
+result <- rbind(result, diverse_score)
+
+```
+Our good metric is cosine similarity of the job description and the resume. It is then normalized to a score between 0 and 1 so you can tell how "good" of a recommendation it is, regardless of the raw cosine similarity. 
+
+
 
 
