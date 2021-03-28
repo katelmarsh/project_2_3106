@@ -93,7 +93,7 @@ TF-IDF does seem to be important though because it has revealed that the job des
 desc_cleaned <- c()
 for (i in seq_along(desc)){
     without_stopwords <- rm_stopwords(
-    desc_example[i],
+    desc[i],
     stopwords = qdapDictionaries::Top200Words, 
     unlist = FALSE,
     separate = TRUE,
@@ -541,9 +541,10 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
 ```
 
 ```{r}
-n_recommendations = 10
-#file_path = "MarshResumeJan2021_for_class.docx"
-file_path = "~/Downloads/MarshResumeJan2021_Data_Mining.txt"
+n_recommendations = 200
+#file_path = "MarshResumeJan2021_Data_Mining.txt"
+file_path = "Li_Jiaxin_resume.txt"
+
 #file_path = "Li_Jiaxin_resume.docx"
 position_names <- job_desc$request_params[[1]] #not na 1
 
