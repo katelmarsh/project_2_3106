@@ -540,28 +540,28 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
   }
   good_metric <- normalize(similarity)
   
-  #diversity_metric <- rep(0, length(recommended_position))
-  #for(j in 1:n_recommendations){
-  #  for(i in 1:length(recommended_position)){
-  #    if(recommended_position[j] ==  recommended_position[i]){
-  #      diversity_metric[i] <- diversity_metric[i]+1}
-  #    if(cluster_name[j] ==  cluster_name[i]){
-  #      diversity_metric[i] <- diversity_metric[i]+1}
-  #  } 
-  #  diversity_metric[j] <- diversity_metric[j]-2
-  #}
   
-  recommended_result = cbind(similarity,recommended_position,cluster_name, good_metric, diversity_metric)
+  recommended_result = cbind(similarity,recommended_position,cluster_name, good_metric)
+  
+  diversity_metric <- rep(0, length(recommended_position))
+    for(i in 1:length(recommended_position)){
+      if(recommended_position[i] %in% duplicated(recommended_position)){
+        diversity_metric[i] <- diversity_metric[i]+1}
+      if(cluster_name[i] %in% duplicated(cluster_name)){
+        diversity_metric[i] <- diversity_metric[i]+1}
+    }   
+  
+  recommended_result = cbind(recommended_result, diversity_metric)
   recommended_result <- recommended_result[!duplicated(recommended_result[,"recommended_position"]),]
   recommended_result <- recommended_result[!duplicated(recommended_result[,"cluster_name"]),]
-  
+  #recommended_result <- as.data.frame(recommended_result)
   #recommended_result[with(recommended_result, order(similarity, cluster_name, recommended_position)),]
   return(recommended_result)
 }
 ```
 
 ```{r}
-n_recommendations = 100
+n_recommendations = 300
 file_path = "MarshResumeJan2021_Data_Mining.txt"
 #file_path = "Li_Jiaxin_resume.txt"
 
@@ -581,6 +581,31 @@ kate_example_job <- "The Sabin Center for Climate Change Law at Columbia Law Sch
 desc_example <- c(desc, kate_example_job) 
 # index is 869 
 similarities[869]
+
+```
+
+UX Designer Resume Sample
+https://www.monster.com/career-advice/article/sample-resume-ux-designer-experienced
+
+Sales
+https://www.template.net/business/resume/sales-resume-template-download/
+
+```{r}
+# for some reason this doesn't work 
+result1 <- recommend_resume("Li_Jiaxin_resume.txt", n_recommendations = 300)
+result2 <- recommend_resume("MarshResumeJan2021_Data_Mining.txt", n_recommendations = 300)
+result3 <- recommend_resume("Retail_Sales_Associate_Resume.txt", n_recommendations = 50)
+
+plot(result2[,"similarity"], col = "red", ylim=c(0.05,.14), xlim=c(1,10),
+     main = "Top 10 Job Desciptions vs Cosine Similarity with Resume",
+     ylab= "Cosine Similarity",
+     pch=16
+     )
+par(new = TRUE)
+plot(result1[,"similarity"], col = "blue", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
+par(new = TRUE)
+plot(result3[,"similarity"], col = "green4", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
+legend("topright", legend=c("Kate", "Jiaxin", "Sales Example"), fill=c("red","blue","green4"), cex=.8)
 
 ```
 
@@ -604,6 +629,17 @@ diversity_metric <- function(x) {
   return(metric)
 }
 diverse_score <- diversity_metric(result)
+
+# OR 
+diversity_metric <- rep(0, length(recommended_position))
+  for(j in 1:n_recommendations){
+    for(i in 1:length(recommended_position)){
+      if(recommended_position[j] ==  recommended_position[i]){
+        diversity_metric[i] <- diversity_metric[i]+1}
+      if(cluster_name[j] ==  cluster_name[i]){
+        diversity_metric[i] <- diversity_metric[i]+1}
+    } 
+    diversity_metric[j] <- diversity_metric[j]-2
 
 result <- rbind(result, good_score)
 result <- rbind(result, diverse_score)
