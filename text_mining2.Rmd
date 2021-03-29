@@ -74,7 +74,7 @@ abline(h=.9)
 plot(pr_out$sdev)
 
 # data mining approach 
-k <- 3 # could be anywhere from 2-4
+k <- 5 # could be anywhere from 2-4
 plot(pr_out$rotation[, k])
 head(pr_out$rotation[,k]) #these are the loadings 
 abline(h = 0)
@@ -124,6 +124,8 @@ for (i in seq_along(desc)){
 }
 
 # the dim of d is 590*16202. After removing all the punctuations and stopwords, its dimension is 590*13732.
+dim(d)
+
 d_cleaned <- quanteda::dfm(desc_cleaned, verbose = FALSE)
 
 dim(d_cleaned)
@@ -147,6 +149,7 @@ keyword_lists <- data.frame(matrix(NA, nrow = nrow(tf_idf_1), ncol = k))
 for (i in 1:nrow(tf_idf_1)){
   keyword_lists[i,] <- names(tf_idf_1[i,][order(tf_idf_1[i,],decreasing = TRUE)[1:k]])
 }
+head(keyword_lists)
 
 ```
 For each job description(each row in the tf_ids_1), I get the top `r k` tokens with the highest tf-idf value. We can also extract the top 5 tokens with highest tf-idf scores in our resume, and see if there will be some tokens overlapping between the job description and the resume.
