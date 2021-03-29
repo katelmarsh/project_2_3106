@@ -543,36 +543,36 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
   }
   good_metric <- normalize(similarity)
   
-  
   recommended_result = cbind(similarity,recommended_position,cluster_name, good_metric)
   
   diversity_metric <- rep(0, length(recommended_position))
+  positions <- c()
+  clusters <- c()
     for(i in 1:length(recommended_position)){
-      if(recommended_position[i] %in% duplicated(recommended_position)){
-        diversity_metric[i] <- diversity_metric[i]+1}
-      if(cluster_name[i] %in% duplicated(cluster_name)){
-        diversity_metric[i] <- diversity_metric[i]+1}
-    }   
+      if(recommended_position[i] %in% positions){
+        diversity_metric[i] <- diversity_metric[i]+1} 
+      else {positions <- c(positions, recommended_position[i])}
+      if(cluster_name[i] %in% clusters){
+        diversity_metric[i] <- diversity_metric[i]+1} 
+      else {clusters <- c(clusters, cluster_name[i])}
+    }
   
   recommended_result = cbind(recommended_result, diversity_metric)
-  recommended_result <- recommended_result[!duplicated(recommended_result[,"recommended_position"]),]
-  recommended_result <- recommended_result[!duplicated(recommended_result[,"cluster_name"]),]
-  #recommended_result <- as.data.frame(recommended_result)
-  #recommended_result[with(recommended_result, order(similarity, cluster_name, recommended_position)),]
+  #recommended_result <- recommended_result[!duplicated(recommended_result[,"recommended_position"]),]
+  #recommended_result <- recommended_result[!duplicated(recommended_result[,"cluster_name"]),]
   return(recommended_result)
 }
 ```
 
 ```{r}
 n_recommendations = 300
-file_path = "MarshResumeJan2021_Data_Mining.txt"
-#file_path = "Li_Jiaxin_resume.txt"
+#file_path = "MarshResumeJan2021_Data_Mining.txt"
+file_path = "Li_Jiaxin_resume.txt"
 
 #file_path = "Li_Jiaxin_resume.docx"
 position_names <- job_desc$request_params[[1]] #not na 1
 
 result <- recommend_resume(file_path, n_recommendations)
-
 ```
 
 ```{r evaluate recommendations}
@@ -597,7 +597,14 @@ https://www.template.net/business/resume/sales-resume-template-download/
 # for some reason this doesn't work 
 result1 <- recommend_resume("Li_Jiaxin_resume.txt", n_recommendations = 300)
 result2 <- recommend_resume("MarshResumeJan2021_Data_Mining.txt", n_recommendations = 300)
-result3 <- recommend_resume("Retail_Sales_Associate_Resume.txt", n_recommendations = 50)
+result3 <- recommend_resume("Retail_Sales_Associate_Resume.txt", n_recommendations = 300)
+
+hist(as.numeric(result1[,"diversity_metric"]))
+par(new = TRUE)
+hist(as.numeric(result2[,"diversity_metric"]))
+par(new = TRUE)
+hist(as.numeric(result3[,"diversity_metric"]))
+
 
 plot(result2[,"similarity"], col = "red", ylim=c(0.05,.14), xlim=c(1,10),
      main = "Top 10 Job Desciptions vs Cosine Similarity with Resume",
