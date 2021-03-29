@@ -558,6 +558,7 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
     }
   
   recommended_result = cbind(recommended_result, diversity_metric)
+  recommended_result = head(recommended_result[order(recommended_result[,"diversity_metric"]),], n_recommendations) 
   #recommended_result <- recommended_result[!duplicated(recommended_result[,"recommended_position"]),]
   #recommended_result <- recommended_result[!duplicated(recommended_result[,"cluster_name"]),]
   return(recommended_result)
@@ -565,7 +566,7 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
 ```
 
 ```{r}
-n_recommendations = 300
+n_recommendations = 10
 #file_path = "MarshResumeJan2021_Data_Mining.txt"
 file_path = "Li_Jiaxin_resume.txt"
 
