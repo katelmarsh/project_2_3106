@@ -1,9 +1,9 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: '3106 Project 2: Kate and Jiaxin'
+output:
+  pdf_document: default
+  html_notebook: default
 ---
-
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
 ```{r}
 library(jsonlite)
@@ -66,29 +66,6 @@ tf_idf <- freqs_mat * idf_mat
 ```
 
 
-```{r pca}
-pr_out <- prcomp(tf_idf_1, scale=TRUE) #look at names of pr_out 
-eigen_val <- pr_out$sdev^2 
-plot(cumsum(eigen_val) / sum(eigen_val))
-abline(h=.9)
-plot(pr_out$sdev)
-
-# data mining approach 
-k <- 5 # could be anywhere from 2-4
-plot(pr_out$rotation[, k])
-head(pr_out$rotation[,k]) #these are the loadings 
-abline(h = 0)
-which(abs(pr_out$rotation[, k]) > 0.06)
-```
-
-The some of the loadings are who, we, are, :, cardinal, and financial. 
-NOTE: I am wondering if our word-separation method is the best we could use because the loadings include a lot of things like punctuation marks. 
-
-There are a lot of words with high PCA values. 
-NOTE: should we keep the websites in? 
-TF-IDF does seem to be important though because it has revealed that the job descriptions are asking for very specific things like "agtech" or "adventurous" very frequently.  
-
-
 ```{r remove stopwords and punctuations}
 desc_cleaned <- c()
 for (i in seq_along(desc)){
@@ -141,6 +118,28 @@ tf_idf_1 <- freqs_mat_1 * idf_mat_1
 
 ```
 
+```{r pca}
+pr_out <- prcomp(tf_idf_1, scale=TRUE) #look at names of pr_out 
+eigen_val <- pr_out$sdev^2 
+plot(cumsum(eigen_val) / sum(eigen_val))
+abline(h=.9)
+plot(pr_out$sdev)
+
+# data mining approach 
+k <- 5 # could be anywhere from 2-4
+plot(pr_out$rotation[, k])
+head(pr_out$rotation[,k]) #these are the loadings 
+abline(h = 0)
+which(abs(pr_out$rotation[, k]) > 0.06)
+```
+
+The some of the loadings are who, we, are, :, cardinal, and financial. 
+NOTE: I am wondering if our word-separation method is the best we could use because the loadings include a lot of things like punctuation marks. 
+
+There are a lot of words with high PCA values. 
+NOTE: should we keep the websites in? 
+TF-IDF does seem to be important though because it has revealed that the job descriptions are asking for very specific things like "agtech" or "adventurous" very frequently. 
+
 ```{r}
 # get the top k tokens with the highest tf-idf value
 k <- 15
@@ -158,7 +157,7 @@ For each job description(each row in the tf_ids_1), I get the top `r k` tokens w
 # give priority on the resume. 
 # cooccurance- build up association between words 
 #data(stop_words) # Stop words.
-real_resume <- read_docx("Li_Jiaxin_resume.docx")
+real_resume <- readLines("Li_Jiaxin_resume.txt")
 real_resume <- str_replace_all(real_resume, pattern = '\"', replacement = "")
 
 # real_resume <- paste(real_resume,collapse="")
@@ -178,7 +177,7 @@ keywords_in_resume <- names(tf_idf_resume[1,][order(tf_idf_1[1,],decreasing = TR
 ```{r}
 overlap_keyword <- c()
 for (i in 1:nrow(tf_idf_1)){
-  keyword_job_desc <- key_words[i,]
+  keyword_job_desc <- keyword_lists[i,]
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
 
@@ -211,7 +210,7 @@ keywords_in_resume <- text_wordcounts$word[1:100]
 
 overlap_keyword <- c()
 for (i in 1:nrow(tf_idf_1)){
-  keyword_job_desc <- key_words[i,]
+  keyword_job_desc <- keyword_lists[i,]
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
 sum(overlap_keyword)
@@ -234,10 +233,10 @@ resume <- quanteda::dfm(real_resume_k, verbose = FALSE)
 stops <- stopwords("smart")
 cols <- removePunctuation(colnames(resume), preserve_intra_word_contractions = TRUE, preserve_intra_word_dashes = TRUE)
 #colnames(cols["klm2244columbiaedu"]) <- "klm2244columbia.edu"
-keep_cols <- cols[!cols %in% stops]# colnames w/o stopwords
-keep_cols <- rm_number(cols, trim = TRUE, clean = TRUE)
-keep_cols <- stri_remove_empty(keep_cols)
-resume <- resume[, keep_cols]
+#keep_cols <- cols[!cols %in% stops]# colnames w/o stopwords
+#keep_cols <- rm_number(cols, trim = TRUE, clean = TRUE)
+#keep_cols <- stri_remove_empty(keep_cols)
+#resume <- resume[, keep_cols]
 
 
 target_freq_resume <- as.numeric(resume)
@@ -258,10 +257,9 @@ for (i in 1:nrow(tf_idf_1)){
   keyword_job_desc <- keyword_lists[i,]
   overlap_keyword[i] <- length(intersect(keywords_in_resume,keyword_job_desc))
 }
-#head(overlap_keyword)
+head(overlap_keyword)
 
 ```
-Overlap!!
 
 ```{r KATE RESUME: trying another way to extract most frequent tokens as keywords in my resume}
 text <- paste(real_resume_k,collapse="")
@@ -291,22 +289,17 @@ for (i in 1:nrow(tf_idf_1)){
 }
 sum(overlap_keyword)
 
-
 highly_relevant <- length(which(overlap_keyword>=4))
 head(tf_idf_1[highly_relevant,]) 
 head(desc[highly_relevant])
 overlap_keyword[26]
 desc[26]
 
-intersect(which(grepl("sustainab", desc, ignore.case = TRUE)), highly_relevant)
+#intersect(which(grepl("sustainab", desc, ignore.case = TRUE)), highly_relevant)
 
 #desc[] #checking on things that would be close to my resume 
-sort(tf_idf_1[847,],decreasing=TRUE) 
+#sort(tf_idf_1[847,],decreasing=TRUE) 
   
-#rownames(tf_idf_1) == tf_idf_1[overlap_keyword,]
-
-## Overlap keywords matrix 
-
 ```
 
 ```{r}
@@ -314,39 +307,37 @@ sort(tf_idf_1[847,],decreasing=TRUE)
 # bind tf_idf_1 
 #log_df1 = cbind(d, as.matrix(tf_idf_1))
 #log_df <- log_df1[,unique(colnames(log_df1))]
-mat_tf_idf <- as.matrix(tf_idf_1)
+#mat_tf_idf <- as.matrix(tf_idf_1)
 
 #hclus_out <- hclust(dist(cbind(x, y)), "single") #cbind to make a matrix 
-hclus_out <- hclust(dist(log_df1), "complete") #cbind to make a matrix 
-plot(hclus_out)
-clus_est <- cutree(hclus_out, k=8)
-plot(tf_idf_1, pch=16,
-     col=c("red", "blue", "black", "green", "purple", "orange", "yellow", "grey", "pink", "navy","tan", "violet", "cyan")[clus_est])
+#hclus_out <- hclust(dist(log_df1), "complete") #cbind to make a matrix 
+#plot(hclus_out)
+#clus_est <- cutree(hclus_out, k=8)
+#plot(tf_idf_1, pch=16,
+#     col=c("red", "blue", "black", "green", "purple", "orange", "yellow", "grey", "pink", "navy","tan", "violet", #"cyan")[clus_est])
 
-clus_est
-
-desc[,c(263, 323)]
+#clus_est
+#desc[,c(263, 323)]
 
 ```
 
 
 ```{r}
-km_out <- kmeans(mat_tf_idf, centers = 8)
-names(km_out) # $cluster is the assignment to the cluster 
-length(km_out$cluster)
-table(km_out$cluster)
+#km_out <- kmeans(mat_tf_idf, centers = 8)
+#names(km_out) # $cluster is the assignment to the cluster 
+#length(km_out$cluster)
+#table(km_out$cluster)
 # km_out$centers 
-km_out$centers 
+#km_out$centers 
 # j is the TRUE assignment 
-mean(km_out$cluster==j) # xbar and ybar in the different groups 
+#mean(km_out$cluster==j) # xbar and ybar in the different groups 
 # NOT a good way to evaluate 
-table(km_out$cluster, j)
+#table(km_out$cluster, j)
 
-
-cols <- c("red", "blue", "green", "purple", "yellow", "orange", "pink", "grey")
-plot(tf_idf_1,
-     col=cols[km_out$cluster],
-     pch=16)
+#cols <- c("red", "blue", "green", "purple", "yellow", "orange", "pink", "grey")
+#plot(tf_idf_1,
+#     col=cols[km_out$cluster],
+#     pch=16)
 ```
 
 ```{r}
@@ -464,26 +455,6 @@ g + geom_bar(stat="identity", width = 0.5, fill="#355070") +
 
 ```
 
-```{r logistic model}
-
-log_df1 = cbind(d, as.matrix(tf_idf))
-log_df <- log_df1[,unique(colnames(log_df1))]
-#log_df<-sapply(log_df1, function(x) as.character(x))
-
-# this does not work. I am not sure why. 
-
-is_train <- sample(nrow(log_df),nrow(log_df)*0.80)
-job.train = log_df[is_train,]
-job.test = log_df[-is_train,]
-
-logit_mod <- glm(docs ~ .,
-                    family = "binomial",
-                    data = job.train)
-pred.glm = as.numeric(predict(logit_mod, job.test, type="response") > 0.5)
-```
-
-
-
 ```{r recommendation algorightm}
 recommend_resume <- function(file_path = file_path, n_recommendations = n_recommendations){
   # give priority on the resume. 
@@ -558,15 +529,13 @@ recommend_resume <- function(file_path = file_path, n_recommendations = n_recomm
     }
   
   recommended_result = cbind(recommended_result, diversity_metric)
-  recommended_result = head(recommended_result[order(recommended_result[,"diversity_metric"]),], n_recommendations) 
-  #recommended_result <- recommended_result[!duplicated(recommended_result[,"recommended_position"]),]
-  #recommended_result <- recommended_result[!duplicated(recommended_result[,"cluster_name"]),]
+  recommended_result = as.data.frame(head(recommended_result[order(recommended_result[,"diversity_metric"]),], n_recommendations)) 
   return(recommended_result)
 }
 ```
 
 ```{r}
-n_recommendations = 10
+n_recommendations = 300
 #file_path = "MarshResumeJan2021_Data_Mining.txt"
 file_path = "Li_Jiaxin_resume.txt"
 
@@ -580,11 +549,11 @@ result <- recommend_resume(file_path, n_recommendations)
 
 #trying to text an example job desc. this didn't work
 
-kate_example_job <- "The Sabin Center for Climate Change Law at Columbia Law School is seeking a few exceptional undergraduate and/or master’s students to serve as interns for summer 2021. Undergraduate and master’s-level interns work with the Center’s faculty director, Professor Michael Gerrard, Executive Director Michael Burger, and current fellows on a wide range of cutting-edge climate change, energy, and environmental policy issues. The Center does both domestic and international work on climate change mitigation and adaptation. Students will be assigned to projects that are policy oriented, or may work jointly with law student interns on projects with a legal component, and should receive broad exposure to the field of climate change law. Students with some background in environmental policy, energy policy and/or sustainable development are particularly encouraged to apply. Internships are full time for 8-10 weeks. Unfortunately, the Center is not able to provide funding for summer internships. Preference will be given to Columbia/Barnard students."
+kate_example_job <- "The Sabin Center for Climate Change Law at Columbia Law School is seeking a few exceptional undergraduate and/or master’s students to serve as interns for summer 2021. Undergraduate and master’s-level interns work with the Center’s faculty director, Professor Michael Gerrard, Executive Director Michael Burger, and current fellows on a wide range of cutting-edge climate change, energy, and environmental policy issues. The Center does both domestic and international work on climate change mitigation and adaptation. Students will be assigned to projects that are policy oriented, or may work jointly with law student interns on projects with a legal component, and should receive broad exposure to the field of climate change law. Students with some background in environmental policy, energy policy and/or sustainable development are particularly encouraged to apply. Internships are full time for 8-10 weeks. Unfortunately, the Center is not able to provide funding for summer internships. Preference will be given to Columbia/Barnard students. Strong academic qualifications and a demonstrated interest in environmental, natural resources or energy law and policy will be expected. The Sabin Center’s commitment to diversity, equity, and inclusion leads us to seek candidates from a broad range of perspectives and backgrounds."
 
 desc_example <- c(desc, kate_example_job) 
 # index is 869 
-similarities[869]
+#similarities[869]
 
 ```
 
@@ -595,69 +564,61 @@ Sales
 https://www.template.net/business/resume/sales-resume-template-download/
 
 ```{r}
-# for some reason this doesn't work 
 result1 <- recommend_resume("Li_Jiaxin_resume.txt", n_recommendations = 300)
 result2 <- recommend_resume("MarshResumeJan2021_Data_Mining.txt", n_recommendations = 300)
 result3 <- recommend_resume("Retail_Sales_Associate_Resume.txt", n_recommendations = 300)
+formattable(result3)
 
-hist(as.numeric(result1[,"diversity_metric"]))
-par(new = TRUE)
-hist(as.numeric(result2[,"diversity_metric"]))
-par(new = TRUE)
-hist(as.numeric(result3[,"diversity_metric"]))
-
-
-plot(result2[,"similarity"], col = "red", ylim=c(0.05,.14), xlim=c(1,10),
-     main = "Top 10 Job Desciptions vs Cosine Similarity with Resume",
-     ylab= "Cosine Similarity",
-     pch=16
-     )
-par(new = TRUE)
-plot(result1[,"similarity"], col = "blue", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
-par(new = TRUE)
-plot(result3[,"similarity"], col = "green4", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
-legend("topright", legend=c("Kate", "Jiaxin", "Sales Example"), fill=c("red","blue","green4"), cex=.8)
-
-```
-
-```{r}
-# good metric is similarity metric normalized 
-
-
-good_score <- normalize(as.numeric(result["similarity",]))
-
-# diversity metric is a scale of 0-2 with 0 being no overlap with first rec, 1 being 1 overlap, and 2 being two overlaps
-
-diversity_metric <- function(x) {
-  metric <- rep(0, n_recommendations)
-  for(i in 1:n_recommendations){
-    if(result["recommended_position", 1] ==  result["recommended_position", i]){
-      metric[i] <- metric[i]+1}
-    if(result["cluster_name", 1] ==  result["cluster_name", i]){
-      metric[i] <- metric[i]+1}
-  } 
-  metric[1] <- 0 
-  return(metric)
-}
-diverse_score <- diversity_metric(result)
-
-# OR 
-diversity_metric <- rep(0, length(recommended_position))
-  for(j in 1:n_recommendations){
-    for(i in 1:length(recommended_position)){
-      if(recommended_position[j] ==  recommended_position[i]){
-        diversity_metric[i] <- diversity_metric[i]+1}
-      if(cluster_name[j] ==  cluster_name[i]){
-        diversity_metric[i] <- diversity_metric[i]+1}
-    } 
-    diversity_metric[j] <- diversity_metric[j]-2
-
-result <- rbind(result, good_score)
-result <- rbind(result, diverse_score)
+#plot(result2[,"similarity"], col = "red", ylim=c(0.05,.14), xlim=c(1,10),
+#     main = "Top 10 Job Desciptions vs Cosine Similarity with Resume",
+#     ylab= "Cosine Similarity",
+#     pch=16
+#     )
+#par(new = TRUE)
+#plot(result1[,"similarity"], type="p",col = "blue", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
+#par(new = TRUE)
+#plot(result3[,"similarity"], col = "green4", ylim=c(0.05,.14), xlim=c(1,10), ylab=" ", pch=16)
+#legend("topright", legend=c("Kate", "Jiaxin", "Sales Example"), fill=c("red","blue","green4"), cex=.8)
 
 ```
 Our good metric is cosine similarity of the job description and the resume. It is then normalized to a score between 0 and 1 so you can tell how "good" of a recommendation it is, regardless of the raw cosine similarity. 
 
+```{r}
+library(ggplot2)
 
+c1 <- rgb(173,216,230,max = 255, alpha = 80, names = "lt.blue")
+c2 <- rgb(255,192,203, max = 255, alpha = 80, names = "lt.pink")
+c3 <- rgb(144,238,144, max = 255, alpha = 80, names = "lt.green")
 
+hist(as.numeric(result1[,"diversity_metric"]),  col = c1)
+par(new = TRUE)
+hist(as.numeric(result2[,"diversity_metric"]), col = c2)
+par(new = TRUE)
+hist(as.numeric(result3[,"diversity_metric"]), col = c3)
+#data <- data.frame(Jiaxin = as.numeric(result1[,"diversity_metric"]), Kate = as.numeric(result2[,"diversity_metric"]),
+#                   Example = as.numeric(result3[,"diversity_metric"]))
 
+par(mfrow=c(3,1)) 
+ggplot(result1, aes(x=diversity_metric)) +
+  geom_bar(fill = "#b56576", aes(y=..count../sum(..count..))) +
+  ggtitle("Jiaxin Diversity Metric Proportions")
+ggplot(result2, aes(x=diversity_metric)) +
+  geom_bar(fill = "#355070", aes(y=..count../sum(..count..))) +
+  ggtitle("Kate Diversity Metric Proportions")
+ggplot(result3, aes(x=diversity_metric)) +
+  geom_bar(fill = "#e56b6f", aes(y=..count../sum(..count..))) +
+  ggtitle("Example Diversity Metric Proportions")
+  
+  
+plot1 <- ggplot() + 
+  geom_bar(aes(diversity_metric))
+  
+  
+#ggplot(result1, aes(x=, y=Kate))) + 
+#  geom_bar(position="dodge", stat="identity")
+
+plot1 <- ggplot() + 
+  geom_bar(aes(x=as.numeric(result1[,"diversity_metric"]), y=..density..),  fill="lightblue") + 
+  geom_bar(aes(x=as.numeric(result2[,"diversity_metric"], y=..density..),  fill="darkblue"))
+  
+```
